@@ -32,7 +32,7 @@ class Deploy(object):
                              repo_dir="repo",
                              package=None,
                              rev="HEAD",
-                             venv_name_command="git --git-dir {repo_dir}/.git --no-pager log -1 --format='%f-%H' {rev}",
+                             venv_name_command="git --git-dir {repo_dir}/.git --no-pager log -1 --format='%f' {rev}",
                              )
         # Override from kwargs
         fail = bool(kwargs.get('config') != self.config)
@@ -120,11 +120,12 @@ class Deploy(object):
         self.req(pip_inst)
 
     def current_rev(self):
-        venv_name = self.system(self.venv_name_command.format(**self.__dict__), output=True)
         self.githash = self.system(
             "git --git-dir {repo_dir}/.git rev-parse {rev}"
             .format(**self.__dict__), output=True)
         assert len(self.githash) == 40
+        venv_name = self.system(self.venv_name_command.format(**self.__dict__), output=True)[:30].rstrip("-")
+        venv_name += "-{}".format(self.githash)
         self.logger.info("Parsed githash for repository {}".format(self.githash))
 
         # If not provided, use basedir
@@ -185,9 +186,9 @@ class Deploy(object):
                       .format(folder, age, links))
 
     def list_venvs(self):
-        print "Age\tLinks\tName"
+        print("Age\tLinks\tName")
         for vals in self.find_venvs():
-            print "{}\t{}\t{}".format(*vals)
+            print("{}\t{}\t{}".format(*vals))
 
     def link(self, rev=None):
         if rev is None:
